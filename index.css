@@ -1,0 +1,25 @@
+.container {
+  display:flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.drop-zone {
+  background-color:lightcoral;
+  width:100%;
+  text-align:center;
+  padding: 10px 0; 
+}
+.drop-zone-drag {
+  content: "DROP HERE";
+  background-color: lightyellow;
+}
+
+#file-loader {
+  /*display: none;*/
+}
+
+#chart {
+   width: 100%;
+   height: 100%
+}
