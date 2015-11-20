@@ -1,18 +1,15 @@
 
-//google.setOnLoadCallback(drawChart);
 function drawChart(rawData, cb) {
   var data = google.visualization.arrayToDataTable(rawData);
 
   var options = {
-    hAxis: {minValue: 0, maxValue: 15},
-    vAxis: {minValue: 0, maxValue: 15},
-    chartArea: {width:'100%'},
+    chartArea: {width:'70%'},
     trendlines: {
       0: {
         type: 'polynomial',
         degree:4,
         showR2: true,
-        visibleInLegend: true
+        visibleInLegend: false
       }
     }
   };
@@ -60,7 +57,13 @@ var setupListener = () => {
       csv: (cb) => { parseCSV(file, cb) },
       HTMLTableAsStringArray: ["csv", (cb, ctx) => {createHtmlTableStringArray(ctx.csv, cb)}],
       insert: ["HTMLTableAsStringArray", (cb, ctx) => { insertHTMLTable(ctx.HTMLTableAsStringArray, cb)}],
-      drawChart: ["csv", (cb, ctx) => {drawChart(ctx.csv, cb)}]
+      drawChart: ["csv", (cb, ctx) => {drawChart(ctx.csv, cb)}],
+      chartConfigFormù: ["csv", (cb, ctx) => { 
+        const columnNames = ctx.csv.[0];
+        const columnToField = (columnName) => { return `<label>${ColumnName}<input id='column-${columnName}' type="checkbox"/></label>` };
+        const columnSelector = _.map(columnNames, columnToField);
+        cb(null, columnSelector.join(''));
+      }
     });
 
   }
