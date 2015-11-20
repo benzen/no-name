@@ -58,12 +58,12 @@ var setupListener = () => {
       HTMLTableAsStringArray: ["csv", (cb, ctx) => {createHtmlTableStringArray(ctx.csv, cb)}],
       insert: ["HTMLTableAsStringArray", (cb, ctx) => { insertHTMLTable(ctx.HTMLTableAsStringArray, cb)}],
       drawChart: ["csv", (cb, ctx) => {drawChart(ctx.csv, cb)}],
-      chartConfigFormù: ["csv", (cb, ctx) => { 
-        const columnNames = ctx.csv.[0];
-        const columnToField = (columnName) => { return `<label>${ColumnName}<input id='column-${columnName}' type="checkbox"/></label>` };
+      chartConfigForm: ["csv", (cb, ctx) => { 
+        const columnNames = ctx.csv[0];
+        const columnToField = (columnName) => { return `<label>${columnName}<input id='column-${columnName}' type="checkbox"/></label>` };
         const columnSelector = _.map(columnNames, columnToField);
         cb(null, columnSelector.join(''));
-      }
+      }]
     });
 
   }
