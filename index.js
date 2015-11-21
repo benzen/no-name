@@ -1,21 +1,13 @@
 
-function drawChart(rawData, cb) {
-  var data = google.visualization.arrayToDataTable(rawData);
-
-  var options = {
-    chartArea: {width:'70%'},
-    trendlines: {
-      0: {
-        type: 'polynomial',
-        degree:4,
-        showR2: true,
-        visibleInLegend: false
-      }
-    }
-  };
-
-  var chartLinear = new google.visualization.ScatterChart(document.getElementById('chart'));
-  chartLinear.draw(data, options);
+function drawChart(rawData, regression, cb) {
+  const element = document.getElementById('chart');
+  const paper = Raphael(element);
+  const rawDataWithoutHeader = _.drop(rawData);
+  const unzippedRawData = _.unzip(rawDataWithoutHeader);
+  const xs = unzippedRawData[0];
+  const ys = unzippedRawData[1];
+  const regressionYs = _.unzip(regression.points)[1]
+  paper.linechart(0, 0, 1300, 500, xs, [ys, regressionYs], {smooth: true, colors: ['#0F0','#F00'], symbol: 'circle'});
   cb();
 
 }
@@ -44,28 +36,66 @@ var setupListener = () => {
     async.map(rows, iter, cb);
   }
 
-  const insertHTMLTable = (htmlTableAsStringArray, cb) => {
+  const insertHTML = (htmlTableAsStringArray, chartConfigForm, cb) => {
     const table = htmlTableAsStringArray.join('')
-    const holder = document.getElementById("data");
-    holder.innerHTML = `<table>${table}</table>`;
-    cb()
-  }
+    const tableHolder = document.getElementById("data");
+    tableHolder.innerHTML = `<table>${table}</table>`;
 
-  var onFileChange = () => {
+    const configHolder = document.getElementById("config");
+    configHolder.innerHTML = `<form>${chartConfigForm}</form>`;
+
+    cb();
+  }
+  const createChartConfigForm = (csv, cb) => {
+    const columnNames = csv[0];
+    const columnToField = (columnName) => { 
+      return "<tr>" +
+               `<td> <input id="master-${columnName}" type="checkbox" /></td>` +
+               `<td> <input id="slave-${columnName}" type="checkbox" /></td>` +
+               `<td> <label> ${columnName} </label></td>` +
+             "</tr>"
+    };
+    const columnSelectors = _.map(columnNames, columnToField).join('');
+    const dataConfigTable =  "<table>" +
+                          "<tr>" +
+                            "<th>Master</th>" +
+                            "<th>Slave</th>" +
+                            "<th></th>" +
+                          "</tr>"+
+                          columnSelectors +
+                         "</table>";
+
+    const regressionForm = "<form>" +
+                             "<label>Regression</label>" + 
+                             "<select>" +
+                                "<option>Linear</option>" +
+                                "<option>Polynomial Degree 2</option>" +
+                                "<option>Polynomial Degree 3</option>" +
+                                "<option>Polynomial Degree 4</option>" +
+                             "</select>" +
+                           "</form>";
+    cb(null, dataConfigTable + regressionForm);    
+  };
+
+  const computeRegression = (csv, cb) => {
+        const data = _.drop(csv);
+        const coefficient = regression('linear', data);
+        cb(null, coefficient);
+    
+  };
+  
+  const onFileChange = () => {
     var file = fileLoader.files[0];
     async.auto({
       csv: (cb) => { parseCSV(file, cb) },
+      regression: ["csv", (cb, ctx) => computeRegression(ctx.csv, cb)],
       HTMLTableAsStringArray: ["csv", (cb, ctx) => {createHtmlTableStringArray(ctx.csv, cb)}],
-      insert: ["HTMLTableAsStringArray", (cb, ctx) => { insertHTMLTable(ctx.HTMLTableAsStringArray, cb)}],
-      drawChart: ["csv", (cb, ctx) => {drawChart(ctx.csv, cb)}],
-      chartConfigForm: ["csv", (cb, ctx) => { 
-        const columnNames = ctx.csv[0];
-        const columnToField = (columnName) => { return `<label>${columnName}<input id='column-${columnName}' type="checkbox"/></label>` };
-        const columnSelector = _.map(columnNames, columnToField);
-        cb(null, columnSelector.join(''));
-      }]
+      insert: ["HTMLTableAsStringArray", "chartConfigForm",(cb, ctx) => { 
+        insertHTML(ctx.HTMLTableAsStringArray, ctx.chartConfigForm, cb);
+      }],
+      drawChart: ["csv", "regression", (cb, ctx) => {drawChart(ctx.csv, ctx.regression, cb)}],
+      chartConfigForm: ["csv", (cb, ctx) => createChartConfigForm(ctx.csv, cb)]
     });
-
   }
   
   fileLoader.addEventListener("change", onFileChange);
