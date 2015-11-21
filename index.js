@@ -6,8 +6,15 @@ function drawChart(rawData, regression, cb) {
   const unzippedRawData = _.unzip(rawDataWithoutHeader);
   const xs = unzippedRawData[0];
   const ys = unzippedRawData[1];
-  const regressionYs = _.unzip(regression.points)[1]
-  paper.linechart(0, 0, 1300, 500, xs, [ys, regressionYs], {smooth: true, colors: ['#0F0','#F00'], symbol: 'circle'});
+  const regressionYs = _.unzip(regression.points)[1];
+  const chartOptions = 
+  {
+    smooth: true
+  , colors: ['#0F0','#F00']
+  , symbol: 'circle'
+  , axis: "0 0 1 1"
+  }; 
+  paper.linechart(0, 0, 1300, 500, xs, [ys, regressionYs], chartOptions);
   cb();
 
 }
